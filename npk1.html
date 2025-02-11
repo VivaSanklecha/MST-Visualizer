@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive MST Visualizer</title>
+    <link rel="stylesheet" href="npk1.css">
+    <style>
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+            z-index: 1000;  
+        }
+
+        .navbar {
+            z-index: 1000;  
+            position: relative;
+        }
+
+        #container {
+            position: relative;
+            z-index: 1;  
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        Minimum <span>Spanning Tree</span> Visualizer
+    </div>
+
+    <button class="back-button" onclick="goBack()">
+        <span>←</span> Back
+    </button>
+
+    <canvas id="background"></canvas>
+
+    <div id="container">
+        <div class="controls">
+            <button id="addNodeBtn" onclick="toggleNodeMode()">Add Nodes</button>
+            <button id="addEdgeBtn" onclick="toggleEdgeMode()">Add Edges</button>
+            <button id="clearBtn" onclick="clearGraph()">Clear Graph</button>
+            <button id="resetBtn" onclick="resetGraph()">Reset MST</button>
+        </div>
+        
+        <div class="main-content">
+            <div class="algorithm-box">
+                <h2>Prim's Algorithm</h2>
+                <div>
+                    <label for="startVertex">Start Vertex:</label>
+                    <input type="number" id="startVertex" min="0" placeholder="0">
+                </div>
+                <button onclick="runPrims()">Run Prim's</button>
+                <p id="primsCost" class="cost-display">Total Cost: 0</p>
+                <p id="primsError" class="error-message"></p>
+            </div>
+
+            <div class="center-content">
+                <canvas id="graphCanvas" width="600" height="400"></canvas>
+                <p id="instructions">Click to add nodes. Select two nodes to create an edge.</p>
+            </div>
+
+            <div class="algorithm-box">
+                <h2>Kruskal's Algorithm</h2>
+                <button onclick="runKruskals()">Run Kruskal's</button>
+                <p id="kruskalsCost" class="cost-display">Total Cost: 0</p>
+                <p id="kruskalsError" class="error-message"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function goBack() {
+            window.location.href = 'pnk.html';
+        }
+
+        const backgroundCanvas = document.getElementById('background');
+        const bgCtx = backgroundCanvas.getContext('2d');
+
+        let bgWidth, bgHeight;
+        const bgNodes = [];
+        const maxNodes = 50;
+        const maxDistance = 300;
+
+        function resizeCanvas() {
+            backgroundCanvas.width = window.innerWidth;
+            backgroundCanvas.height = window.innerHeight;
+            bgWidth = backgroundCanvas.width;
+            bgHeight = backgroundCanvas.height;
+            bgNodes.length = 0;
+            initNodes();
+        }
+
+        function initNodes() {
+            for (let i = 0; i < maxNodes; i++) {
+                bgNodes.push({
+                    x: Math.random() * bgWidth,
+                    y: Math.random() * bgHeight,
+                    dx: (Math.random() - 0.5) * 2,
+                    dy: (Math.random() - 0.5) * 2,
+                    radius: 8 + Math.random() * 5,
+                });
+            }
+        }
+
+        function drawBgNodes() {
+            bgNodes.forEach(node => {
+                bgCtx.beginPath();
+                bgCtx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+                bgCtx.fillStyle = '#1abc9c';
+                bgCtx.fill();
+            });
+        }
+
+        function drawBgEdges() {
+            for (let i = 0; i < bgNodes.length; i++) {
+                for (let j = i + 1; j < bgNodes.length; j++) {
+                    const dist = Math.hypot(bgNodes[i].x - bgNodes[j].x, bgNodes[i].y - bgNodes[j].y);
+                    if (dist < maxDistance) {
+                        bgCtx.beginPath();
+                        bgCtx.moveTo(bgNodes[i].x, bgNodes[i].y);
+                        bgCtx.lineTo(bgNodes[j].x, bgNodes[j].y);
+                        bgCtx.strokeStyle = `rgba(52, 152, 219, ${1 - dist / maxDistance})`;
+                        bgCtx.lineWidth = 1.5;
+                        bgCtx.stroke();
+                    }
+                }
+            }
+        }
+
+        function updateBgNodes() {
+            bgNodes.forEach(node => {
+                node.x += node.dx;
+                node.y += node.dy;
+
+                if (node.x < 0 || node.x > bgWidth) node.dx *= -1;
+                if (node.y < 0 || node.y > bgHeight) node.dy *= -1;
+            });
+        }
+
+        function animateBackground() {
+            bgCtx.clearRect(0, 0, bgWidth, bgHeight);
+            drawBgEdges();
+            drawBgNodes();
+            updateBgNodes();
+            requestAnimationFrame(animateBackground);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        animateBackground();
+
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        const addNodeBtn = document.getElementById('addNodeBtn');
+        const addEdgeBtn = document.getElementById('addEdgeBtn');
+        const instructions = document.getElementById('instructions');
+
+        let nodes = [];
+        let edges = [];
+        let mstEdges = [];
+        let isAddingNodes = true;
+        let isAddingEdges = false;
+        let selectedNode = null;
+        const NODE_RADIUS = 15;
+
+        class Node {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.id = nodes.length;
+            }
+        }
+
+        class Edge {
+            constructor(node1, node2) {
+                this.node1 = node1;
+                this.node2 = node2;
+                const distance = Math.sqrt(
+                    Math.pow(node2.x - node1.x, 2) + 
+                    Math.pow(node2.y - node1.y, 2)
+                );
+                this.weight = Math.max(1, Math.min(10, Math.round(distance / 40)));
+            }
+        }
+
+        canvas.addEventListener('click', handleCanvasClick);
+
+        function toggleNodeMode() {
+            isAddingNodes = true;
+            isAddingEdges = false;
+            selectedNode = null;
+            addNodeBtn.classList.add('mode-active');
+            addEdgeBtn.classList.remove('mode-active');
+            instructions.textContent = "Click to add nodes.";
+            drawGraph();
+        }
+
+        function toggleEdgeMode() {
+            isAddingNodes = false;
+            isAddingEdges = true;
+            selectedNode = null;
+            addNodeBtn.classList.remove('mode-active');
+            addEdgeBtn.classList.add('mode-active');
+            instructions.textContent = "Select two nodes to create an edge.";
+            drawGraph();
+        }
+
+        function handleCanvasClick(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            if (isAddingNodes) {
+                addNode(x, y);
+            } else if (isAddingEdges) {
+                handleEdgeCreation(x, y);
+            }
+        }
+
+        function addNode(x, y) {
+            for (let node of nodes) {
+                const distance = Math.sqrt(Math.pow(node.x - x, 2) + Math.pow(node.y - y, 2));
+                if (distance < NODE_RADIUS * 2) return;
+            }
+            nodes.push(new Node(x, y));
+            drawGraph();
+        }
+
+        function handleEdgeCreation(x, y) {
+            const clickedNode = findNodeAtPosition(x, y);
+            
+            if (clickedNode) {
+                if (!selectedNode) {
+                    selectedNode = clickedNode;
+                    drawGraph();
+                    ctx.beginPath();
+                    ctx.arc(selectedNode.x, selectedNode.y, NODE_RADIUS, 0, 2 * Math.PI);
+                    ctx.strokeStyle = '#ff0000';
+                    ctx.stroke();
+                } else if (selectedNode !== clickedNode) {
+                    const edgeExists = edges.some(edge => 
+                        (edge.node1 === selectedNode && edge.node2 === clickedNode) ||
+                        (edge.node1 === clickedNode && edge.node2 === selectedNode)
+                    );
+
+                    if (!edgeExists) {
+                        edges.push(new Edge(selectedNode, clickedNode));
+                    }
+                    selectedNode = null;
+                    drawGraph();
+                }
+            }
+        }
+
+        function findNodeAtPosition(x, y) {
+            return nodes.find(node => {
+                const distance = Math.sqrt(Math.pow(node.x - x, 2) + Math.pow(node.y - y, 2));
+                return distance <= NODE_RADIUS;
+            });
+        }
+
+        function drawGraph() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            edges.forEach(edge => {
+                ctx.beginPath();
+                ctx.moveTo(edge.node1.x, edge.node1.y);
+                ctx.lineTo(edge.node2.x, edge.node2.y);
+                ctx.strokeStyle = '#ccc';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                const midX = (edge.node1.x + edge.node2.x) / 2;
+                const midY = (edge.node1.y + edge.node2.y) / 2;
+                ctx.fillStyle = '#000';
+                ctx.fillText(Math.round(edge.weight), midX, midY);
+            });
+
+            mstEdges.forEach(edge => {
+                ctx.beginPath();
+                ctx.moveTo(edge.node1.x, edge.node1.y);
+                ctx.lineTo(edge.node2.x, edge.node2.y);
+                ctx.strokeStyle = '#ff0000';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            });
+
+            nodes.forEach((node, index) => {
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, NODE_RADIUS, 0, 2 * Math.PI);
+                ctx.fillStyle = '#4CAF50';
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                ctx.fillStyle = '#fff';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(index, node.x, node.y);
+            });
+        }
+
+        function clearGraph() {
+            nodes = [];
+            edges = [];
+            mstEdges = [];
+            selectedNode = null;
+            drawGraph();
+        }
+
+        function resetGraph() {
+            mstEdges = [];
+            drawGraph();
+        }
+
+        function calculateMSTCost(edges) {
+            return edges.reduce((sum, edge) => sum + edge.weight, 0);
+        }
+
+        function runPrims() {
+            const startVertexInput = document.getElementById('startVertex');
+            const errorElement = document.getElementById('primsError');
+            const costElement = document.getElementById('primsCost');
+            const startIndex = parseInt(startVertexInput.value) || 0;
+
+            costElement.textContent = "Total Cost: 0";
+            if (nodes.length === 0) {
+                errorElement.textContent = "Please create a graph first";
+                return;
+            }
+            if (startIndex < 0 || startIndex >= nodes.length) {
+                errorElement.textContent = `Please enter a valid vertex number (0-${nodes.length - 1})`;
+                return;
+            }
+
+            errorElement.textContent = ""; 
+            mstEdges = [];
+            const visited = new Set();
+            visited.add(nodes[startIndex]);
+
+            while (visited.size < nodes.length) {
+                let minEdge = null;
+                let minWeight = Infinity;
+
+                edges.forEach(edge => {
+                    const isNode1Visited = visited.has(edge.node1);
+                    const isNode2Visited = visited.has(edge.node2);
+
+                    if ((isNode1Visited && !isNode2Visited) || 
+                        (!isNode1Visited && isNode2Visited)) {
+                        if (edge.weight < minWeight) {
+                            minWeight = edge.weight;
+                            minEdge = edge;
+                        }
+                    }
+                });
+
+                if (minEdge) {
+                    mstEdges.push(minEdge);
+                    visited.add(minEdge.node1);
+                    visited.add(minEdge.node2);
+                } else {
+                    errorElement.textContent = "Graph is not connected";
+                    break;
+                }
+            }
+
+            const totalCost = calculateMSTCost(mstEdges);
+            costElement.textContent = `Total Cost: ${totalCost}`;
+
+            drawGraph();
+        }
+
+        function find(parent, i) {
+            if (parent[i] === i) return i;
+            return find(parent, parent[i]);
+        }
+
+        function union(parent, rank, x, y) {
+            const xRoot = find(parent, x);
+            const yRoot = find(parent, y);
+
+            if (rank[xRoot] < rank[yRoot]) {
+                parent[xRoot] = yRoot;
+            } else if (rank[xRoot] > rank[yRoot]) {
+                parent[yRoot] = xRoot;
+            } else {
+                parent[yRoot] = xRoot;
+                rank[xRoot]++;
+            }
+        }
+
+        function runKruskals() {
+            const errorElement = document.getElementById('kruskalsError');
+            const costElement = document.getElementById('kruskalsCost');
+            costElement.textContent = "Total Cost: 0";
+            
+            if (nodes.length === 0) {
+                errorElement.textContent = "Please create a graph first";
+                return;
+            }
+
+            errorElement.textContent = ""; 
+            mstEdges = [];
+            const sortedEdges = [...edges].sort((a, b) => a.weight - b.weight);
+            const parent = {};
+            const rank = {};
+
+            nodes.forEach(node => {
+                parent[node.id] = node.id;
+                rank[node.id] = 0;
+            });
+
+            for (const edge of sortedEdges) {
+                const x = find(parent, edge.node1.id);
+                const y = find(parent, edge.node2.id);
+
+                if (x !== y) {
+                    mstEdges.push(edge);
+                    union(parent, rank, x, y);
+                }
+
+                if (mstEdges.length === nodes.length - 1) break;
+            }
+
+            if (mstEdges.length < nodes.length - 1) {
+                errorElement.textContent = "Graph is not connected";
+            }
+
+            const totalCost = calculateMSTCost(mstEdges);
+            costElement.textContent = `Total Cost: ${totalCost}`;
+
+            drawGraph();
+        }
+
+        toggleNodeMode();
+    </script>
+</body>
+</html>

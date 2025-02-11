@@ -1,0 +1,244 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: linear-gradient(135deg, #290584, #28103a);
+}
+canvas {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.navbar {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    background: rgba(41, 5, 132, 0.8);
+    color: #ffffff;
+    padding: 1rem 2rem;
+    font-size: 1.5rem;
+    font-family: 'Arial', sans-serif;
+    font-weight: bold;
+    text-align: center;
+    z-index: 10;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.navbar span {
+    color: #1abc9c;
+}
+
+.box {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 1.5rem 2rem;
+    background: rgba(52, 73, 94, 0.9);
+    color: #ecf0f1;
+    font-size: 1.2rem;
+    text-align: center;
+    border: 2px solid #1abc9c;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 20;
+    transition: opacity 0.3s, transform 0.3s;
+}
+.box.hidden {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.9);
+    pointer-events: none;
+}
+
+.circle-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 2rem;
+}
+
+.circle {
+    width: 350px;
+    height: 350px;
+    background: linear-gradient(135deg, #1abc9c, #9c4aa7);
+    color: #ffffff;
+    font-size: 2rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s;
+}
+.circle:hover {
+    transform: scale(1.1);
+}
+
+#algorithmBox {
+    width: 50%;
+    height: auto;
+    margin-top: 0.0001%;
+}
+
+.back-btn {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1abc9c;
+    color: #ffffff;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.back-btn:hover {
+    background: #16a085;
+}
+
+#mstContainer {
+    width: 80%;
+    height: 300px;
+    margin: 2rem auto;
+    background: rgba(41, 128, 185, 0.8);
+    border: 2px solid #ecf0f1;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    color: #ecf0f1;
+    text-align: center;
+    padding: 1rem;
+    font-size: 1.5rem;
+    position: relative;
+}
+
+#mstImage {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#definitionBox {
+    top: 10%;
+}
+
+#definitionBox span {
+    font-size: 1.3rem;
+    transition: color 0.3s ease;
+}
+#definitionBox span:hover {
+    color: #1abc9c;
+}
+
+#stepsBox {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(52, 152, 219, 0.9);
+    color: #ecf0f1;
+    border: 2px solid #1abc9c;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+#stepsBox:hover {
+    transform: scale(1.05);
+}
+
+.try-btn {
+    display: block;
+    margin: 20px auto;
+    padding: 12px 24px;
+    background-color:rgba(41, 5, 132, 0.8);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.try-btn:hover {
+    background-color: #4b1a50;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .navbar {
+        font-size: 1.2rem;
+        padding: 0.8rem 1rem;
+    }
+
+    .box {
+        width: 90%;
+        font-size: 1rem;
+        padding: 1rem;
+    }
+
+    .circle-container {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .circle {
+        width: 250px;
+        height: 250px;
+        font-size: 1.5rem;
+    }
+
+    #mstContainer {
+        width: 90%;
+        height: 250px;
+        font-size: 1.2rem;
+        padding: 0.5rem;
+    }
+
+    .back-btn {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar {
+        font-size: 1rem;
+    }
+
+    .box {
+        top: 15%;
+        font-size: 0.9rem;
+    }
+
+    .circle {
+        width: 200px;
+        height: 200px;
+        font-size: 1.2rem;
+    }
+
+    #mstContainer {
+        height: 200px;
+        font-size: 1rem;
+    }
+
+    .back-btn {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+    }
+
+    #stepsBox {
+        font-size: 1rem;
+        padding: 0.8rem;
+    }
+}

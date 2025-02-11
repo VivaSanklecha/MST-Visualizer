@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Graph Visualization Background</title>
+  <link rel="stylesheet" href="pnkstyle.css">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .box1, .box2, .box3 {
+      width: 28%;
+      height: 43vh;
+      border: 2px solid #1abc9c;
+      background-color: rgba(52, 152, 219, 0.2);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      margin: 20px;
+      border-radius: 3%;
+    }
+    .box1 {
+      position: absolute;
+      top: 10%;
+      left: 5%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .box2 {
+      position: absolute;
+      top: 10%;
+      left: 35%;
+      text-align: center;
+      padding-top: 20px;
+    }
+    .box3 {
+      position: absolute;
+      top: 10%;
+      left: 65%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .btn {
+      background-color: #1abc9c;
+      color: white;
+      border: none;
+      padding: 15px 25px;
+      text-align: center;
+      text-decoration: none;
+      font-size: 16px;
+      border-radius: 5px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #16a085;
+    }
+    #nb {
+      background-color: #1abc9c;
+      color: white;
+      border: none;
+      padding: 15px 25px;
+      text-align: center;
+      text-decoration: none;
+      font-size: 16px;
+      border-radius: 5px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+  #nb:hover {
+      background-color: #16a085;
+    }
+    .circle-btn {
+      width: 150px;
+      height: 150px;
+      border: 3px solid #1abc9c;
+      border-radius: 50%;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      margin: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      color: white;
+      background-color: rgba(26, 188, 156, 0.8);
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+    }
+    .circle-btn:hover {
+      background-color: #16a085;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    Minimum <span>Cost Spanning Tree</span> Visualizer
+  </div>
+  <canvas id="background"></canvas>
+  <div class="box1">
+    <button  class="btn" onclick="window.location.href='https://www.geeksforgeeks.org/prims-minimum-spanning-tree-mst-greedy-algo-5/'">Learn About Graphs</a></button>
+  </div>
+  <div class="box2">
+    <p style="font-size: 20px; color: white; font-weight: bold;">There are two algorithms to create MST:</p>
+    <div>
+      <button class="circle-btn">Prim's Algorithm</button>
+      <button class="circle-btn">Kruskal's Algorithm</button>
+    </div>
+  </div>
+  <div class="box3">
+    <button onclick="window.location.href='npk1.html'" id="nb">Try Visualizing</button>
+  </div>
+  <script>
+    const canvas = document.getElementById('background');
+    const ctx = canvas.getContext('2d');
+
+    let width, height;
+    const nodes = [];
+    const maxNodes = 50;
+    const maxDistance = 300;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      width = canvas.width;
+      height = canvas.height;
+      nodes.length = 0;
+      initNodes();
+    }
+
+    function initNodes() {
+      for (let i = 0; i < maxNodes; i++) {
+        nodes.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          dx: (Math.random() - 0.5) * 2,
+          dy: (Math.random() - 0.5) * 2,
+          radius: 8 + Math.random() * 5,
+        });
+      }
+    }
+
+    function drawNodes() {
+      nodes.forEach(node => {
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#1abc9c';
+        ctx.fill();
+      });
+    }
+
+    function drawEdges() {
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dist = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+          if (dist < maxDistance) {
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.strokeStyle = `rgba(52, 152, 219, ${1 - dist / maxDistance})`;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function updateNodes() {
+      nodes.forEach(node => {
+        node.x += node.dx;
+        node.y += node.dy;
+
+        if (node.x < 0 || node.x > width) node.dx *= -1;
+        if (node.y < 0 || node.y > height) node.dy *= -1;
+      });
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+      drawEdges();
+      drawNodes();
+      updateNodes();
+      requestAnimationFrame(animate);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    animate();
+  </script>
+</body>
+</html>
